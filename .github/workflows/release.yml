@@ -23,12 +23,12 @@ jobs:
       - name: Download latest CLI release assets
         run: |
           mkdir -p artifacts/cli
-          gh release download --repo "$CLI_REPO" --dir artifacts/cli
+          gh release download --repo "$CLI_REPO" --dir artifacts/cli --pattern '*'
 
       - name: Download latest Desktop release assets
         run: |
           mkdir -p artifacts/desktop
-          gh release download --repo "$DESKTOP_REPO" --dir artifacts/desktop
+          gh release download --repo "$DESKTOP_REPO" --dir artifacts/desktop --pattern '*'
 
       - name: Upload assets to this release
         run: |
