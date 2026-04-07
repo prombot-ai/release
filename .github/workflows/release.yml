@@ -20,6 +20,8 @@ jobs:
       CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
       DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download latest CLI release assets
         run: |
           mkdir -p artifacts/cli
@@ -33,6 +35,7 @@ jobs:
       - name: Upload assets to this release
         run: |
           TAG="${{ github.event.release.tag_name }}"
+          REPO="${{ github.repository }}"
           find artifacts -type f -print0 | while IFS= read -r -d '' f; do
-            gh release upload "$TAG" "$f" --clobber
+            gh release upload "$TAG" "$f" --clobber --repo "$REPO"
           done
