@@ -2,7 +2,8 @@ name: Aggregate PromBot CLI and Desktop releases
 
 # When a release is published here, attach the latest assets from the CLI and
 # Desktop repos (same patterns as their release workflows: archives/bundles and
-# Windows extras from those pipelines).
+# Windows extras from those pipelines), then refresh README.md with direct
+# latest-release download links for those filenames.
 
 on:
   release:
@@ -21,6 +22,9 @@ jobs:
       DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          token: ${{ secrets.PROMBOT_TOKEN || github.token }}
 
       - name: Download latest CLI release assets
         run: |
@@ -39,3 +43,94 @@ jobs:
           find artifacts -type f -print0 | while IFS= read -r -d '' f; do
             gh release upload "$TAG" "$f" --clobber --repo "$REPO"
           done
+
+      - name: Update README with latest release download links
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          LATEST="${REPO_URL}/releases/latest"
+          TAG_URL="${REPO_URL}/releases/tag/${RELEASE_TAG}"
+
+          row_cli() {
+            local base="$1"
+            local url="${REPO_URL}/releases/latest/download/${base}"
+            case "$base" in
+              *_linux.tar.gz) printf '| Linux | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_macos.tar.gz) printf '| macOS | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_windows.zip) printf '| Windows | [`%s`](%s) |\n' "$base" "$url" ;;
+              *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
+            esac
+          }
+
+          row_desktop() {
+            local base="$1"
+            local url="${REPO_URL}/releases/latest/download/${base}"
+            case "$base" in
+              *.deb) printf '| Linux | [`%s`](%s) |\n' "$base" "$url" ;;
+              *.dmg) printf '| macOS | [`%s`](%s) |\n' "$base" "$url" ;;
+              *.exe) printf '| Windows (portable) | [`%s`](%s) |\n' "$base" "$url" ;;
+              *.msi) printf '| Windows (installer) | [`%s`](%s) |\n' "$base" "$url" ;;
+              *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
+            esac
+          }
+
+          {
+            echo '# release'
+            echo ''
+            echo 'PromBot release distribution.'
+            echo ''
+            echo "**Bundled downloads (this repo):** [Latest release](${LATEST}) · [${RELEASE_TAG}](${TAG_URL})"
+            echo ''
+            echo '---'
+            echo ''
+            echo '## PromBot CLI'
+            echo ''
+            echo '| Platform | Download |'
+            echo '|----------|----------|'
+            if [[ -n "$(find artifacts/cli -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+              while IFS= read -r f; do
+                [[ -n "${f:-}" ]] || continue
+                row_cli "$(basename "$f")"
+              done < <(find artifacts/cli -maxdepth 1 -type f | sort)
+            else
+              echo '| | *No CLI artifacts in this run* |'
+            fi
+            echo ''
+            echo '## PromBot Desktop'
+            echo ''
+            echo '| Platform | Download |'
+            echo '|----------|----------|'
+            if [[ -n "$(find artifacts/desktop -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+              while IFS= read -r f; do
+                [[ -n "${f:-}" ]] || continue
+                row_desktop "$(basename "$f")"
+              done < <(find artifacts/desktop -maxdepth 1 -type f | sort)
+            else
+              echo '| | *No Desktop artifacts in this run* |'
+            fi
+            echo ''
+            echo '## PromBot App'
+            echo ''
+            echo '| Platform | Latest release |'
+            echo '|----------|----------------|'
+            echo "| Android | [Download](https://github.com/${OWNER}/app/releases/latest) |"
+            echo "| iOS | [Download](https://github.com/${OWNER}/app/releases/latest) |"
+          } > README.md
+
+      - name: Commit README if changed
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "README.md already up to date."
+          else
+            git commit -m "docs: refresh README download links for ${RELEASE_TAG}"
+            git push origin "HEAD:${DEFAULT_BRANCH}"
+          fi
