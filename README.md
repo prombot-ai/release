@@ -1,18 +1,18 @@
 # release
-prom release
+PromBot release
 
 ## Release list
 
-### Prombot CLI
+### PromBot CLI
 - Linux
 - macOS
 - Windows
 
-### Prombot Desktop
+### PromBot Desktop
 - Linux
 - macOS
 - Windows
 
-### Prombot App
+### PromBot App
 - Android
 - iOS
