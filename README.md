@@ -27,7 +27,6 @@ PromBot release distribution.
 
 ## PromBot App
 
-| Platform | Latest release |
-|----------|----------------|
-| Android | [Download](https://github.com/prombot-ai/app/releases/latest) |
-| iOS | [Download](https://github.com/prombot-ai/app/releases/latest) |
+| Platform | Download |
+|----------|----------|
+| Android | [`prombot-app-v0.2.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-v0.2.0-android.apk) |
