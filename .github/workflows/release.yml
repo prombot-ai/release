@@ -1,21 +1,108 @@
-name: Aggregate PromBot CLI and Desktop releases
+name: Aggregate PromBot CLI, Desktop, and App releases
 
-# When a release is published here, attach the latest assets from the CLI and
-# Desktop repos (same patterns as their release workflows: archives/bundles and
-# Windows extras from those pipelines), then refresh README.md with direct
-# latest-release download links for those filenames.
+# When a release is published here, build the Android app (EAS, same as the app
+# repo), attach the APK, attach the latest assets from the CLI and Desktop repos,
+# then refresh README.md with direct latest-release download links.
 
 on:
   release:
     types:
       - created
 
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
 jobs:
+  build-android:
+    name: EAS Android (APK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ format('{0}/app', github.repository_owner) }}
+          ref: ${{ github.event.release.tag_name }}
+          token: ${{ secrets.PROMBOT_TOKEN || github.token }}
+
+      - name: Resolve Expo app directory
+        run: |
+          if [ -f app/package.json ]; then
+            echo "EXPO_APP_ROOT=app" >> "$GITHUB_ENV"
+          elif [ -f package.json ]; then
+            echo "EXPO_APP_ROOT=." >> "$GITHUB_ENV"
+          else
+            echo "::error::No package.json at repo root or app/. Set up the Expo app or adjust paths."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: ${{ env.EXPO_APP_ROOT }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ env.EXPO_APP_ROOT }}
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: Ensure EAS project is linked
+        working-directory: ${{ env.EXPO_APP_ROOT }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          if node -e "const j=require('./app.json'); process.exit(j.expo?.extra?.eas?.projectId ? 0 : 1)"; then
+            echo "EAS project ID already present in app.json."
+            exit 0
+          fi
+          if [ -n "${EAS_PROJECT_ID:-}" ]; then
+            eas init --non-interactive --id "$EAS_PROJECT_ID" --force
+          else
+            eas init --non-interactive --force
+          fi
+
+      - name: EAS build (Android)
+        working-directory: ${{ env.EXPO_APP_ROOT }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_BUILD_NO_EXPO_GO_WARNING: "true"
+        run: eas build --platform android --profile production --non-interactive --wait
+
+      - name: Download Android artifact
+        working-directory: ${{ env.EXPO_APP_ROOT }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          OUT="prombot-app-${{ github.event.release.tag_name }}-android.apk"
+          JSON=$(eas build:list --platform android --limit 1 --non-interactive --json)
+          URL=$(echo "$JSON" | jq -r '.[0].artifacts // {} | .applicationArchiveUrl // .url // .buildUrl // empty')
+          if [ -z "$URL" ] || [ "$URL" = "null" ]; then
+            echo "::error::Could not read artifact URL from eas build:list. Raw response:"
+            echo "$JSON" | jq .
+            exit 1
+          fi
+          curl -fL --retry 3 --retry-delay 5 -o "$OUT" "$URL"
+
+      - name: Upload APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${{ github.workspace }}/${{ env.EXPO_APP_ROOT }}/prombot-app-${{ github.event.release.tag_name }}-android.apk" \
+            --clobber --repo "${{ github.repository }}"
+
   aggregate:
     name: Upload latest CLI and Desktop release assets
+    needs: build-android
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
       GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
       CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
@@ -36,11 +123,20 @@ jobs:
           mkdir -p artifacts/desktop
           gh release download --repo "$DESKTOP_REPO" --dir artifacts/desktop --pattern '*'
 
+      - name: Download Android APK from this release
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/app
+          gh release download "$TAG" --repo "$REPO" --dir artifacts/app --pattern 'prombot-app-*-android.apk'
+
       - name: Upload assets to this release
         run: |
           TAG="${{ github.event.release.tag_name }}"
           REPO="${{ github.repository }}"
-          find artifacts -type f -print0 | while IFS= read -r -d '' f; do
+          find artifacts/cli artifacts/desktop -type f -print0 | while IFS= read -r -d '' f; do
             gh release upload "$TAG" "$f" --clobber --repo "$REPO"
           done
 
@@ -73,6 +169,16 @@ jobs:
               *.dmg) printf '| macOS | [`%s`](%s) |\n' "$base" "$url" ;;
               *.exe) printf '| Windows (portable) | [`%s`](%s) |\n' "$base" "$url" ;;
               *.msi) printf '| Windows (installer) | [`%s`](%s) |\n' "$base" "$url" ;;
+              *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
+            esac
+          }
+
+          row_app() {
+            local base="$1"
+            local url="${REPO_URL}/releases/latest/download/${base}"
+            case "$base" in
+              *-android.apk) printf '| Android | [`%s`](%s) |\n' "$base" "$url" ;;
+              *-ios.ipa) printf '| iOS | [`%s`](%s) |\n' "$base" "$url" ;;
               *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
             esac
           }
@@ -114,10 +220,18 @@ jobs:
             echo ''
             echo '## PromBot App'
             echo ''
-            echo '| Platform | Latest release |'
-            echo '|----------|----------------|'
-            echo "| Android | [Download](https://github.com/${OWNER}/app/releases/latest) |"
-            echo "| iOS | [Download](https://github.com/${OWNER}/app/releases/latest) |"
+            echo '| Platform | Download |'
+            echo '|----------|----------|'
+            if [[ -n "$(find artifacts/app -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+              while IFS= read -r f; do
+                [[ -n "${f:-}" ]] || continue
+                row_app "$(basename "$f")"
+              done < <(find artifacts/app -maxdepth 1 -type f | sort)
+            else
+              echo '| | *No App artifacts in this run* |'
+            fi
+            echo ''
+            echo "For iOS builds and additional app notes, see [${OWNER}/app releases](https://github.com/${OWNER}/app/releases/latest)."
           } > README.md
 
       - name: Commit README if changed
