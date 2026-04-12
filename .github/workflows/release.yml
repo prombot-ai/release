@@ -1,9 +1,8 @@
-name: Aggregate PromBot CLI and Desktop releases
+name: Aggregate PromBot CLI, Desktop, and App releases
 
-# When a release is published here, attach the latest assets from the CLI and
-# Desktop repos (same patterns as their release workflows: archives/bundles and
-# Windows extras from those pipelines), then refresh README.md with direct
-# latest-release download links for those filenames.
+# When a release is published here, attach the latest assets from the CLI,
+# Desktop, and App repos (same patterns as their release workflows), then
+# refresh README.md with direct latest-release download links for those filenames.
 
 on:
   release:
@@ -12,7 +11,7 @@ on:
 
 jobs:
   aggregate:
-    name: Upload latest CLI and Desktop release assets
+    name: Upload latest CLI, Desktop, and App release assets
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,6 +19,7 @@ jobs:
       GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
       CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
       DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
+      APP_REPO: ${{ format('{0}/app', github.repository_owner) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +36,11 @@ jobs:
           mkdir -p artifacts/desktop
           gh release download --repo "$DESKTOP_REPO" --dir artifacts/desktop --pattern '*'
 
+      - name: Download latest APP release assets
+        run: |
+          mkdir -p artifacts/app
+          gh release download --repo "$APP_REPO" --dir artifacts/app --pattern '*'
+
       - name: Upload assets to this release
         run: |
           TAG="${{ github.event.release.tag_name }}"
@@ -49,7 +54,6 @@ jobs:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
           set -euo pipefail
-          OWNER="${GITHUB_REPOSITORY%%/*}"
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
           LATEST="${REPO_URL}/releases/latest"
           TAG_URL="${REPO_URL}/releases/tag/${RELEASE_TAG}"
@@ -73,6 +77,16 @@ jobs:
               *.dmg) printf '| macOS | [`%s`](%s) |\n' "$base" "$url" ;;
               *.exe) printf '| Windows (portable) | [`%s`](%s) |\n' "$base" "$url" ;;
               *.msi) printf '| Windows (installer) | [`%s`](%s) |\n' "$base" "$url" ;;
+              *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
+            esac
+          }
+
+          row_app() {
+            local base="$1"
+            local url="${REPO_URL}/releases/latest/download/${base}"
+            case "$base" in
+              *.apk) printf '| Android | [`%s`](%s) |\n' "$base" "$url" ;;
+              *.ipa) printf '| iOS | [`%s`](%s) |\n' "$base" "$url" ;;
               *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
             esac
           }
@@ -114,10 +128,16 @@ jobs:
             echo ''
             echo '## PromBot App'
             echo ''
-            echo '| Platform | Latest release |'
-            echo '|----------|----------------|'
-            echo "| Android | [Download](https://github.com/${OWNER}/app/releases/latest) |"
-            echo "| iOS | [Download](https://github.com/${OWNER}/app/releases/latest) |"
+            echo '| Platform | Download |'
+            echo '|----------|----------|'
+            if [[ -n "$(find artifacts/app -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+              while IFS= read -r f; do
+                [[ -n "${f:-}" ]] || continue
+                row_app "$(basename "$f")"
+              done < <(find artifacts/app -maxdepth 1 -type f | sort)
+            else
+              echo '| | *No App artifacts in this run* |'
+            fi
           } > README.md
 
       - name: Commit README if changed
