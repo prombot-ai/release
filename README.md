@@ -2,7 +2,7 @@
 
 PromBot release distribution.
 
-**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.7.0](https://github.com/prombot-ai/release/releases/tag/v0.7.0)
+**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.8.0](https://github.com/prombot-ai/release/releases/tag/v0.8.0)
 
 ---
 
@@ -10,10 +10,10 @@ PromBot release distribution.
 
 | Platform | Download |
 |----------|----------|
-| Linux | [`prombot-cli_0.4.0_linux.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.4.0_linux.tar.gz) |
-| | [`prombot-cli_0.4.0_linux_arm64.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.4.0_linux_arm64.tar.gz) |
-| macOS | [`prombot-cli_0.4.0_macos.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.4.0_macos.tar.gz) |
-| Windows | [`prombot-cli_0.4.0_windows.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.4.0_windows.zip) |
+| Linux | [`prombot-cli_0.6.0_linux.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.6.0_linux.tar.gz) |
+| | [`prombot-cli_0.6.0_linux_arm64.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.6.0_linux_arm64.tar.gz) |
+| macOS | [`prombot-cli_0.6.0_macos.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.6.0_macos.tar.gz) |
+| Windows | [`prombot-cli_0.6.0_windows.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.6.0_windows.zip) |
 
 ## PromBot Desktop
 
