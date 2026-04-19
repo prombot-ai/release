@@ -2,7 +2,7 @@
 
 PromBot release distribution.
 
-**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.10.0](https://github.com/prombot-ai/release/releases/tag/v0.10.0)
+**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.11.0](https://github.com/prombot-ai/release/releases/tag/v0.11.0)
 
 ---
 
@@ -10,24 +10,24 @@ PromBot release distribution.
 
 | Platform | Download |
 |----------|----------|
-| Linux | [`prombot-cli_0.8.0_linux.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.8.0_linux.tar.gz) |
-| | [`prombot-cli_0.8.0_linux_arm64.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.8.0_linux_arm64.tar.gz) |
-| macOS | [`prombot-cli_0.8.0_macos.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.8.0_macos.tar.gz) |
-| Windows | [`prombot-cli_0.8.0_windows.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.8.0_windows.zip) |
+| Linux | [`prombot-cli_0.9.0_linux.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.9.0_linux.tar.gz) |
+| | [`prombot-cli_0.9.0_linux_arm64.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.9.0_linux_arm64.tar.gz) |
+| macOS | [`prombot-cli_0.9.0_macos.tar.gz`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.9.0_macos.tar.gz) |
+| Windows | [`prombot-cli_0.9.0_windows.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-cli_0.9.0_windows.zip) |
 
 ## PromBot Desktop
 
 | Platform | Download |
 |----------|----------|
-| macOS | [`prombot-desktop_0.12.0_aarch64.dmg`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.12.0_aarch64.dmg) |
-| Linux | [`prombot-desktop_0.12.0_amd64.deb`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.12.0_amd64.deb) |
-| Linux | [`prombot-desktop_0.12.0_arm64.deb`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.12.0_arm64.deb) |
-| Windows (portable) | [`prombot-desktop_0.12.0_x64.exe`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.12.0_x64.exe) |
-| Windows (installer) | [`prombot-desktop_0.12.0_x64.msi`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.12.0_x64.msi) |
+| macOS | [`prombot-desktop_0.13.0_aarch64.dmg`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.13.0_aarch64.dmg) |
+| Linux | [`prombot-desktop_0.13.0_amd64.deb`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.13.0_amd64.deb) |
+| Linux | [`prombot-desktop_0.13.0_arm64.deb`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.13.0_arm64.deb) |
+| Windows (portable) | [`prombot-desktop_0.13.0_x64.exe`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.13.0_x64.exe) |
+| Windows (installer) | [`prombot-desktop_0.13.0_x64.msi`](https://github.com/prombot-ai/release/releases/latest/download/prombot-desktop_0.13.0_x64.msi) |
 
 ## PromBot App
 
 | Platform | Download |
 |----------|----------|
-| Android | [`prombot-app-0.7.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.7.0-android.apk) |
-| | [`prombot-app-0.7.0-ios-simulator.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.7.0-ios-simulator.zip) |
+| Android | [`prombot-app-0.8.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.8.0-android.apk) |
+| | [`prombot-app-0.8.0-ios-simulator.zip`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.8.0-ios-simulator.zip) |
