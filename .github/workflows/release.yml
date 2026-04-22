@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     env:
       GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
       CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
@@ -40,6 +41,27 @@ jobs:
         run: |
           mkdir -p artifacts/app
           gh release download --repo "$APP_REPO" --dir artifacts/app --pattern '*'
+
+      # Prefer OIDC to assume an AWS role. Fallback to long-lived access keys.
+      - name: Configure AWS credentials (OIDC)
+        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure AWS credentials (access keys)
+        if: ${{ secrets.AWS_ROLE_ARN == '' }}
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload all artifacts to S3 (s3://prombot-ai/release/)
+        run: |
+          set -euo pipefail
+          aws s3 sync artifacts "s3://prombot-ai/release/" --only-show-errors
 
       - name: Upload assets to this release
         run: |
