@@ -21,6 +21,8 @@ jobs:
       CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
       DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
       APP_REPO: ${{ format('{0}/app', github.repository_owner) }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -42,21 +44,29 @@ jobs:
           mkdir -p artifacts/app
           gh release download --repo "$APP_REPO" --dir artifacts/app --pattern '*'
 
+      - name: Validate AWS config
+        run: |
+          set -euo pipefail
+          if [[ -z "${AWS_REGION:-}" ]]; then
+            echo "Missing required secret: AWS_REGION"
+            exit 1
+          fi
+
       # Prefer OIDC to assume an AWS role. Fallback to long-lived access keys.
       - name: Configure AWS credentials (OIDC)
-        if: ${{ secrets.AWS_ROLE_ARN != '' }}
+        if: ${{ env.AWS_ROLE_ARN != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Configure AWS credentials (access keys)
-        if: ${{ secrets.AWS_ROLE_ARN == '' }}
+        if: ${{ env.AWS_ROLE_ARN == '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload all artifacts to S3 (s3://prombot-ai/release/)
         run: |

@@ -54,6 +54,33 @@ Create an IAM access key, then add it to GitHub Actions Secrets.
 
 1. AWS Console → **IAM** → **Users** → **Create user** (e.g. `github-actions-prombot-release`)
 2. Attach permissions that can write to `s3://prombot-ai/release/` (avoid using the root account; prefer least privilege)
+
+   Minimal policy example:
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "ListBucket",
+         "Effect": "Allow",
+         "Action": ["s3:ListBucket"],
+         "Resource": "arn:aws:s3:::prombot-ai"
+       },
+       {
+         "Sid": "WriteReleasePrefix",
+         "Effect": "Allow",
+         "Action": [
+           "s3:PutObject",
+           "s3:AbortMultipartUpload",
+           "s3:ListMultipartUploadParts"
+         ],
+         "Resource": "arn:aws:s3:::prombot-ai/release/*"
+       }
+     ]
+   }
+   ```
+
 3. IAM → **Users** → your user → **Security credentials** → **Access keys** → **Create access key**
 4. Save the generated values (shown only once):
    - `AWS_ACCESS_KEY_ID`
