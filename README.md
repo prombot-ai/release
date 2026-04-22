@@ -30,3 +30,35 @@ PromBot release distribution.
 | Platform | Download |
 |----------|----------|
 | Android | [`prombot-app-0.10.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.10.0-android.apk) |
+
+## PromBot S3
+
+### Amazon S3
+
+`s3://prombot-ai/release/`
+
+```bash
+# List artifacts
+aws s3 ls s3://prombot-ai/release/ --recursive
+
+# Download one file
+aws s3 cp s3://prombot-ai/release/<path/to/file> .
+
+# Download everything
+aws s3 sync s3://prombot-ai/release/ ./artifacts
+```
+
+### Amazon Configure
+
+Create an IAM access key, then add it to GitHub Actions Secrets.
+
+1. AWS Console → **IAM** → **Users** → **Create user** (e.g. `github-actions-prombot-release`)
+2. Attach permissions that can write to `s3://prombot-ai/release/` (avoid using the root account; prefer least privilege)
+3. IAM → **Users** → your user → **Security credentials** → **Access keys** → **Create access key**
+4. Save the generated values (shown only once):
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+5. GitHub repo → **Settings** → **Secrets and variables** → **Actions** → add:
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `AWS_REGION` (e.g. `ap-southeast-1`)
