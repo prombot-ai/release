@@ -2,7 +2,7 @@
 
 PromBot release distribution.
 
-**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.16.0](https://github.com/prombot-ai/release/releases/tag/v0.16.0)
+**Bundled downloads (this repo):** [Latest release](https://github.com/prombot-ai/release/releases/latest) · [v0.17.0](https://github.com/prombot-ai/release/releases/tag/v0.17.0)
 
 ---
 
@@ -29,4 +29,4 @@ PromBot release distribution.
 
 | Platform | Download |
 |----------|----------|
-| Android | [`prombot-app-0.15.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.15.0-android.apk) |
+| Android | [`prombot-app-0.17.0-android.apk`](https://github.com/prombot-ai/release/releases/latest/download/prombot-app-0.17.0-android.apk) |
