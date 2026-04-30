@@ -1,7 +1,7 @@
-name: Aggregate PromBot CLI, Desktop, and App releases
+name: Aggregate PromBot App, CLI, Desktop, and Hub releases
 
-# When a release is published here, attach the latest assets from the CLI,
-# Desktop, and App repos (same patterns as their release workflows), then
+# When a release is published here, attach the latest assets from the App,
+# CLI, Desktop, and Hub repos (same patterns as their release workflows), then
 # refresh README.md with direct latest-release download links for those filenames.
 
 on:
@@ -11,23 +11,29 @@ on:
 
 jobs:
   aggregate:
-    name: Upload latest CLI, Desktop, and App release assets
+    name: Upload latest App, CLI, Desktop, and Hub release assets
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
     env:
-      GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
-      CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
-      DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
       APP_REPO: ${{ format('{0}/app', github.repository_owner) }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
       AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+      CLI_REPO: ${{ format('{0}/cli', github.repository_owner) }}
+      DESKTOP_REPO: ${{ format('{0}/desktop', github.repository_owner) }}
+      GH_TOKEN: ${{ secrets.PROMBOT_TOKEN || github.token }}
+      HUB_REPO: ${{ format('{0}/hub', github.repository_owner) }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.repository.default_branch }}
           token: ${{ secrets.PROMBOT_TOKEN || github.token }}
+
+      - name: Download latest APP release assets
+        run: |
+          mkdir -p artifacts/app
+          gh release download --repo "$APP_REPO" --dir artifacts/app --pattern '*'
 
       - name: Download latest CLI release assets
         run: |
@@ -39,10 +45,10 @@ jobs:
           mkdir -p artifacts/desktop
           gh release download --repo "$DESKTOP_REPO" --dir artifacts/desktop --pattern '*'
 
-      - name: Download latest APP release assets
+      - name: Download latest Hub release assets
         run: |
-          mkdir -p artifacts/app
-          gh release download --repo "$APP_REPO" --dir artifacts/app --pattern '*'
+          mkdir -p artifacts/hub
+          gh release download --repo "$HUB_REPO" --dir artifacts/hub --pattern '*'
 
       - name: Validate AWS config
         run: |
@@ -90,6 +96,16 @@ jobs:
           LATEST="${REPO_URL}/releases/latest"
           TAG_URL="${REPO_URL}/releases/tag/${RELEASE_TAG}"
 
+          row_app() {
+            local base="$1"
+            local url="${REPO_URL}/releases/latest/download/${base}"
+            case "$base" in
+              *.apk) printf '| Android | [`%s`](%s) |\n' "$base" "$url" ;;
+              *.ipa) printf '| iOS | [`%s`](%s) |\n' "$base" "$url" ;;
+              *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
+            esac
+          }
+
           row_cli() {
             local base="$1"
             local url="${REPO_URL}/releases/latest/download/${base}"
@@ -113,12 +129,14 @@ jobs:
             esac
           }
 
-          row_app() {
+          row_hub() {
             local base="$1"
             local url="${REPO_URL}/releases/latest/download/${base}"
             case "$base" in
-              *.apk) printf '| Android | [`%s`](%s) |\n' "$base" "$url" ;;
-              *.ipa) printf '| iOS | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_linux_arm64.tar.gz) printf '| Linux (arm64) | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_linux.tar.gz) printf '| Linux | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_macos.tar.gz) printf '| macOS | [`%s`](%s) |\n' "$base" "$url" ;;
+              *_windows.zip) printf '| Windows | [`%s`](%s) |\n' "$base" "$url" ;;
               *) printf '| | [`%s`](%s) |\n' "$base" "$url" ;;
             esac
           }
@@ -131,6 +149,19 @@ jobs:
             echo "**Bundled downloads (this repo):** [Latest release](${LATEST}) · [${RELEASE_TAG}](${TAG_URL})"
             echo ''
             echo '---'
+            echo ''
+            echo '## PromBot App'
+            echo ''
+            echo '| Platform | Download |'
+            echo '|----------|----------|'
+            if [[ -n "$(find artifacts/app -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+              while IFS= read -r f; do
+                [[ -n "${f:-}" ]] || continue
+                row_app "$(basename "$f")"
+              done < <(find artifacts/app -maxdepth 1 -type f | sort)
+            else
+              echo '| | *No App artifacts in this run* |'
+            fi
             echo ''
             echo '## PromBot CLI'
             echo ''
@@ -158,17 +189,17 @@ jobs:
               echo '| | *No Desktop artifacts in this run* |'
             fi
             echo ''
-            echo '## PromBot App'
+            echo '## PromBot Hub'
             echo ''
             echo '| Platform | Download |'
             echo '|----------|----------|'
-            if [[ -n "$(find artifacts/app -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
+            if [[ -n "$(find artifacts/hub -maxdepth 1 -type f -print -quit 2>/dev/null)" ]]; then
               while IFS= read -r f; do
                 [[ -n "${f:-}" ]] || continue
-                row_app "$(basename "$f")"
-              done < <(find artifacts/app -maxdepth 1 -type f | sort)
+                row_hub "$(basename "$f")"
+              done < <(find artifacts/hub -maxdepth 1 -type f | sort)
             else
-              echo '| | *No App artifacts in this run* |'
+              echo '| | *No Hub artifacts in this run* |'
             fi
           } > README.md
 
